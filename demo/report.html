@@ -1,0 +1,325 @@
+<title>prose-adapter 실험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 원고지 위의 실험 기록: 한 줄 칼럼, 교정 부호(빨간 삭제·초록 삽입)가 곧 데이터의 색 */
+:root {
+  --paper: #f4f6f2;
+  --sheet: #fbfcfa;
+  --ink: #1c231f;
+  --muted: #5f6b63;
+  --grid: #d9e3da;
+  --rule: #c9d4ca;
+  --green: #2e6a4c;
+  --green-soft: #cfe3d6;
+  --red: #b8361f;
+  --red-soft: #f3d6cf;
+  --neutral: #8b968e;
+  --neutral-soft: #e3e8e3;
+  --display: "Gowun Batang", "Nanum Myeongjo", "AppleMyungjo", serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111613; --sheet: #161c18; --ink: #e3e9e4; --muted: #9aa69e; --grid: #222c25; --rule: #2c382f;
+    --green: #74c79a; --green-soft: #1e3a2b; --red: #f08a72; --red-soft: #45231b; --neutral: #7f8a83; --neutral-soft: #26302a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111613; --sheet: #161c18; --ink: #e3e9e4; --muted: #9aa69e; --grid: #222c25; --rule: #2c382f;
+  --green: #74c79a; --green-soft: #1e3a2b; --red: #f08a72; --red-soft: #45231b; --neutral: #7f8a83; --neutral-soft: #26302a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 0 72px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.3; margin: 0; }
+p { margin: 0; max-width: 64ch; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.label { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+del.mk { color: var(--red); text-decoration: line-through; text-decoration-thickness: 1.5px; background: var(--red-soft); }
+ins.mk { color: var(--green); text-decoration: none; border-bottom: 1.5px solid var(--green); background: var(--green-soft); }
+
+/* 머리: 원고지 격자 */
+header.hero {
+  margin-inline: -20px; padding: 56px 20px 40px;
+  background-color: var(--sheet);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: -1px -1px;
+  border-bottom: 1px solid var(--rule);
+}
+.hero-inner { max-width: 860px; margin: 0 auto; display: grid; gap: 18px; }
+.hero h1 { font-size: clamp(30px, 6vw, 50px); }
+.hero h1 del.mk, .hero h1 ins.mk { font-weight: 400; }
+.hero p.thesis { font-size: 17px; background: var(--sheet); padding: 2px 0; }
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 8px; }
+.fig { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.fig .big { font-family: var(--mono); font-size: 28px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fig .big.good { color: var(--green); }
+.fig .big.bad { color: var(--red); }
+.fig .cap { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+section { display: grid; gap: 18px; padding-top: 52px; }
+section > header { display: grid; gap: 6px; }
+section h2 { font-size: 26px; }
+.lede { color: var(--muted); }
+
+/* 갈아 끼우기 막대 */
+.users { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; }
+.user { display: grid; gap: 10px; min-width: 0; }
+.user h3 { font-size: 19px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.user h3 .label { font-size: 11px; }
+.bars { display: grid; gap: 7px; }
+.bar { display: grid; grid-template-columns: 104px 1fr 62px; gap: 10px; align-items: center; font-size: 13.5px; }
+.bar .name { color: var(--ink); }
+.track { position: relative; height: 22px; background: var(--neutral-soft); border-radius: 3px; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; }
+.dot { position: absolute; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: var(--ink); opacity: .45; }
+.bar .val { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; font-size: 13px; }
+.bar .vs { grid-column: 2 / 4; font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: -4px; }
+.k-base .fill { background: var(--neutral); }
+.k-ex .fill { background: var(--neutral); opacity: .55; }
+.k-own .fill { background: var(--green); }
+.k-ownex .fill { background: var(--green); opacity: .6; }
+.k-other .fill { background: var(--red); }
+.note { font-size: 13px; color: var(--muted); }
+
+/* 숨은 취향 대조 */
+.match { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); }
+.row:first-child { border-top: 0; }
+.row .n { font-family: var(--mono); color: var(--muted); font-size: 13px; padding-top: 2px; }
+.row .hidden-t { font-size: 14px; }
+.row .found { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 99px; margin-right: 6px; vertical-align: 1px; border: 1px solid currentColor; }
+.chip.yes { color: var(--green); }
+.chip.part { color: var(--muted); }
+.chip.no, .chip.rev { color: var(--red); }
+details { font-size: 13.5px; }
+details summary { cursor: pointer; color: var(--muted); }
+details summary:focus-visible, a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.rules { display: grid; gap: 10px; margin-top: 10px; }
+.rule { border-left: 2px solid var(--rule); padding-left: 12px; }
+.rule b { font-weight: 600; }
+
+/* 관문 기록 */
+.gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; }
+.gate { display: grid; grid-template-columns: 64px 1fr; gap: 4px 12px; font-size: 13.5px; padding: 10px 0; border-top: 1px solid var(--rule); }
+.gate .v { font-family: var(--mono); font-size: 13px; }
+.gate .verdict.ok { color: var(--green); font-weight: 600; }
+.gate .verdict.no { color: var(--muted); }
+.gate ul { margin: 2px 0 0; padding-left: 16px; color: var(--muted); font-size: 12.5px; }
+
+/* 교정 부호 예시 */
+.proofs { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.proof { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.proof .text { font-family: var(--display); font-size: 15.5px; line-height: 1.95; white-space: pre-wrap; overflow-wrap: anywhere; }
+.proof .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+/* 방법 */
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+.formula { font-family: var(--mono); font-size: 13.5px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
+ul.limits { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 70ch; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+footer code { font-family: var(--mono); font-size: 12.5px; }
+@media (max-width: 480px) {
+  .bar { grid-template-columns: 86px 1fr 54px; font-size: 12.5px; }
+  .users, .gates, .proofs { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="label">prose-adapter · 본실험 · 2026-10-07</div>
+      <h1>퇴고를 <del class="mk">흉내 내는</del><ins class="mk">배우는</ins> 어댑터</h1>
+      <p class="thesis">모델은 그대로 둔다. 사람이 고친 글만 보고 그 사람의 문체 규칙을 찾아, 검증을 통과한 것만 남기는 외부 어댑터다. 취향이 반대인 가상 작가 두 명으로 시험했다.</p>
+      <div class="figures" id="figures"></div>
+    </div>
+  </header>
+
+  <section id="swap">
+    <header>
+      <div class="label">1 · 갈아 끼우기</div>
+      <h2>같은 장면, 다섯 갈래</h2>
+      <p class="lede" id="swap-lede"></p>
+    </header>
+    <div class="users" id="users"></div>
+    <p class="note">막대는 가상 작가가 고친 양의 평균(초고 글자 중 바뀐 비율)이다. 점은 장면 하나씩이다. 승패와 p값은 같은 장면의 빈 어댑터와 짝지어 센 부호 검정이다.</p>
+  </section>
+
+  <section id="taste">
+    <header>
+      <div class="label">2 · 숨은 취향</div>
+      <h2>본 적 없는 취향을 얼마나 찾았나</h2>
+      <p class="lede">학습 쪽은 아래 숨은 취향 목록을 한 번도 보지 않았다. 본 것은 가상 작가가 고친 결과뿐이다. 판정은 별도 채점 모델(opus)이 했다.</p>
+    </header>
+    <div class="users" id="match"></div>
+  </section>
+
+  <section id="gate">
+    <header>
+      <div class="label">3 · 검증 관문</div>
+      <h2>나아질 때만 버전이 오른다</h2>
+      <p class="lede">학습용 교정으로 편집안을 만들고, 숨겨 둔 검증용 교정에서 기존 버전과 겨룬다. 검증용 초고를 각 어댑터로 다시 고치게 해서 작가의 실제 교정본에 더 가까워진 쪽이 이긴다.</p>
+    </header>
+    <div class="gates" id="gates"></div>
+  </section>
+
+  <section id="fix" hidden>
+    <header>
+      <div class="label">3-1 · 1차 실행</div>
+      <h2>관문이 막은 것, 그래서 고친 것</h2>
+      <p class="lede">같은 학습용 교정, 같은 시험 장면으로 두 번 돌렸다. 1차에서 작가 A는 네 번 모두 기각되어 빈 어댑터로 남았다. 기록을 보면 학습은 매번 맞는 규칙(숫자 한글, 감정 → 몸짓, 접속사)을 찾았다. 막은 것은 관문 쪽이었다.</p>
+    </header>
+    <ul class="limits">
+      <li>검증 세트가 16건 중 3건이었다. 해시를 3으로 나눈 나머지로 고르다 쏠렸다. 2차는 해시 순서로 정확히 3분의 1을 뗐다.</li>
+      <li>감정 → 몸짓은 맞는 방향으로 고쳐도 작가와 다른 단어를 쓴다. 글자 유사도만 보던 관문은 이걸 손해로 쳤다. 2차는 작가가 고친 문장을 고치고 둔 문장은 두었는지(위치)를 주 기준으로 삼고, 글자 유사도는 엉뚱한 고침을 막는 하한으로만 쓴다.</li>
+      <li>시험 점수(처음 보는 장면에서 작가가 고친 양)는 두 번 모두 같은 방식으로 쟀다. 고친 것은 버전을 고르는 관문뿐이다.</li>
+    </ul>
+    <div class="table-wrap"><table id="fix-table"></table></div>
+  </section>
+
+  <section id="proof">
+    <header>
+      <div class="label">4 · 교정 부호</div>
+      <h2>작가가 고친 자리</h2>
+      <p class="lede" id="proof-lede"></p>
+    </header>
+    <div id="proofs"></div>
+  </section>
+
+  <section id="method">
+    <header>
+      <div class="label">5 · 방법</div>
+      <h2>점수와 구조</h2>
+    </header>
+    <div class="formula">gain = 유사도(어댑터가 고친 글, 작가 교정본) − 유사도(손대지 않은 초고, 작가 교정본)
+채택 = 검증 평균 gain이 기존보다 높고, 이긴 항목 수 &gt; 진 항목 수</div>
+    <p>내용이 고정된 같은 초고를 고치게 하므로, 좋은 글이 무엇인지 판단하는 심사 모델이 끼지 않는다. 작가가 실제로 고친 글이 정답이다.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>dot 배움 규약</th><th>prose-adapter</th></tr></thead>
+        <tbody>
+          <tr><td>판정 원본 verdicts.md, 추가만</td><td>corrections.jsonl: 초고와 교정본 한 쌍이 판정 한 건</td></tr>
+          <tr><td>보고 전에 예측을 적고 적중률을 잰다</td><td>초고마다 작가가 고칠 문장을 예측하고 실제 고친 문장과 맞춘다</td></tr>
+          <tr><td>판정 하나면 관찰, 둘 이상이면 가설</td><td>근거 교정 1건은 관찰(집필에 안 씀), 2건 이상 가설, 관문 통과 채택</td></tr>
+          <tr><td>고친 기준은 판정을 모르는 새 워커로 검사</td><td>학습용과 검증용을 나누고, 검증 gain이 오를 때만 새 버전</td></tr>
+          <tr><td>원문 불변, 입구 최신, 이력 추가만</td><td>vN.md 불변, CURRENT 입구, HISTORY.md 추가만</td></tr>
+          <tr><td>프로젝트와 공용 층 분리</td><td>작품 상태(설정·인물별 믿음·복선)와 어댑터(문체) 분리</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="limits">
+      <li>가상 작가는 규칙을 기계적으로 지키는 편집자다. 실제 사람의 미묘한 문체는 실제 교정으로 다시 재야 한다.</li>
+      <li>검증 세트가 작으면 그 세트에 맞춰질 수 있다. 시험 장면은 학습과 검증 어디에도 쓰지 않은 새 장면이다.</li>
+      <li>재는 것은 이 작가의 교정에 얼마나 가까운가다. 작품의 흥행이나 절대 품질이 아니다.</li>
+    </ul>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const D = /*__DATA__*/null;
+const USERS = Object.keys(D.tastes);
+const NAME = { a: "작가 A", b: "작가 B" };
+const KIND = { "빈 어댑터": "k-base", "교정 예시만": "k-ex", "내 어댑터": "k-own", "내 어댑터+예시": "k-ownex", "남의 어댑터": "k-other" };
+const pct = (x, d = 1) => (x * 100).toFixed(d) + "%";
+const rel = (x, base) => ((x - base) / base) * 100;
+const sgn = v => (v > 0 ? "+" : "") + v.toFixed(0) + "%";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const el = (id, html) => { document.getElementById(id).innerHTML = html; };
+
+// 머리 숫자
+(() => {
+  const figs = [];
+  for (const u of USERS) {
+    const s = D.summary[u];
+    const own = rel(s["내 어댑터"].edit_cost, s["빈 어댑터"].edit_cost);
+    figs.push(`<div class="fig"><span class="label">${NAME[u]} · 내 어댑터</span><span class="big ${own < 0 ? "good" : "bad"}">${sgn(own)}</span><span class="cap">처음 보는 장면에서 작가가 고칠 양, 빈 어댑터 대비. ${s["내 어댑터"].vs_base}, p=${s["내 어댑터"].p}</span></div>`);
+  }
+  const other = USERS.map(u => rel(D.summary[u]["남의 어댑터"].edit_cost, D.summary[u]["빈 어댑터"].edit_cost));
+  figs.push(`<div class="fig"><span class="label">남의 어댑터를 끼우면</span><span class="big ${Math.min(...other) > 0 ? "bad" : ""}">${other.map(sgn).join(" / ")}</span><span class="cap">A에게 B의 어댑터, B에게 A의 어댑터. 사람마다 갈아 끼워야 한다는 뜻이다.</span></div>`);
+  const found = USERS.map(u => D.judge[u].filter(j => j.verdict === "잡음").length + "/" + D.tastes[u].length);
+  figs.push(`<div class="fig"><span class="label">숨은 취향 찾음</span><span class="big">${found.join(" · ")}</span><span class="cap">작가당 교정 ${D.n_train}건만 보고 찾은 수. 일부 일치는 세지 않았다.</span></div>`);
+  el("figures", figs.join(""));
+})();
+
+// 1 · 갈아 끼우기
+(() => {
+  const all = USERS.flatMap(u => D.arms.flatMap(a => D.per_scene[u][a]));
+  const max = Math.max(...all) * 1.08;
+  el("swap-lede", `학습에도 검증에도 쓰지 않은 장면 ${D.n_test}개를 갈래마다 새로 쓰고, 그 작가가 다시 고쳤다. 교정 예시는 그 작가의 학습용 교정에서 비슷한 것을 꺼내 보여 주는 기능이다.`);
+  el("users", USERS.map(u => {
+    const s = D.summary[u];
+    const rows = D.arms.map(a => {
+      const v = s[a].edit_cost;
+      const dots = D.per_scene[u][a].map(x => `<span class="dot" style="left:${(x / max) * 100}%"></span>`).join("");
+      const vs = a === "빈 어댑터" ? "기준" : `빈 어댑터 대비 ${s[a].vs_base} · p=${s[a].p}`;
+      return `<div class="bar ${KIND[a]}"><span class="name">${a}</span><span class="track"><span class="fill" style="width:${(v / max) * 100}%"></span>${dots}</span><span class="val">${pct(v, 2)}</span><span class="vs">${vs}</span></div>`;
+    }).join("");
+    return `<div class="user"><h3>${NAME[u]} <span class="label">최종 ${esc(D.final[u])} · 학습 전 평균 ${pct(D.train_cost[u], 2)}</span></h3><div class="bars">${rows}</div></div>`;
+  }).join(""));
+})();
+
+// 2 · 숨은 취향
+(() => {
+  const chip = v => ({ "잡음": "yes", "일부": "part", "못 잡음": "no", "반대": "rev" })[v] || "part";
+  el("match", USERS.map(u => {
+    const rows = D.tastes[u].map((t, i) => {
+      const j = D.judge[u].find(x => x.hidden === i + 1) || { verdict: "못 잡음", rule: "", why: "" };
+      return `<div class="row"><span class="n">${i + 1}</span><div><div class="hidden-t"><span class="chip ${chip(j.verdict)}">${esc(j.verdict)}</span>${esc(t)}</div><div class="found">${esc(j.rule ? j.rule + " · " : "")}${esc(j.why)}</div></div></div>`;
+    }).join("");
+    const learned = D.learned[u].map(r => `<div class="rule"><b>${esc(r.id)} ${esc(r.title)}</b> <span class="chip ${r.status === "채택" ? "yes" : "part"}">${esc(r.status)} · 근거 ${r.n}</span><br>${esc(r.do)}${r.when ? `<br><span class="note">언제: ${esc(r.when)}</span>` : ""}${r.unless ? `<br><span class="note">예외: ${esc(r.unless)}</span>` : ""}</div>`).join("");
+    return `<div class="user"><h3>${NAME[u]}</h3><div class="match">${rows}</div><details><summary>배운 규칙 전체 (${D.learned[u].length}개)</summary><div class="rules">${learned}</div></details></div>`;
+  }).join(""));
+})();
+
+// 3 · 관문
+(() => {
+  el("gates", USERS.map(u => {
+    const rows = D.learn[u].map((h, i) => {
+      const ok = h.accepted;
+      const edits = h.edits.map(e => `<li>${esc(e)}</li>`).join("");
+      const loc = h.base_loc !== undefined ? `위치 ${h.base_loc} → ${h.cand_loc} · ` : "";
+      return `<div class="gate"><span class="v">${i + 1}회차</span><div><span class="verdict ${ok ? "ok" : "no"}">${esc(h.from)} 후보 ${ok ? "채택 → " + esc(h.to) : "기각"}</span> <span class="num note">${loc}글자 ${h.base_gain} → ${h.cand_gain} · 이김 ${h.wins} 짐 ${h.losses} · 검증 ${h.val}건</span><ul>${edits}</ul></div></div>`;
+    }).join("");
+    return `<div class="user"><h3>${NAME[u]}</h3><div>${rows}</div></div>`;
+  }).join(""));
+})();
+
+// 3-1 · 1차 실행과 비교
+if (D.run1) {
+  document.getElementById("fix").hidden = false;
+  const cell = (s, u, a) => pct(s[u][a].edit_cost, 2) + ` <span class="note">(${s[u][a].vs_base})</span>`;
+  const rows = USERS.map(u => {
+    const r1 = D.run1, s1 = r1.summary, s2 = D.summary;
+    const acc1 = r1.learn[u].filter(h => h.accepted).length, acc2 = D.learn[u].filter(h => h.accepted).length;
+    const found2 = D.judge[u].filter(j => j.verdict === "잡음").length;
+    return `<tr><td>${NAME[u]}</td><td class="num">검증 ${r1.learn[u][0].val}건 · 채택 ${acc1}/${r1.learn[u].length} · ${esc(r1.final[u])}</td><td class="num">검증 ${D.learn[u][0].val}건 · 채택 ${acc2}/${D.learn[u].length} · ${esc(D.final[u])}</td><td class="num">${cell(s1, u, "내 어댑터")}</td><td class="num">${cell(s2, u, "내 어댑터")}</td><td class="num">${r1.judge[u]} → ${found2}</td></tr>`;
+  }).join("");
+  el("fix-table", `<thead><tr><th>작가</th><th>1차 관문</th><th>2차 관문</th><th>1차 내 어댑터</th><th>2차 내 어댑터</th><th>취향 찾음</th></tr></thead><tbody>${rows}</tbody>`);
+}
+
+// 4 · 교정 부호
+(() => {
+  const render = m => m.map(([k, t]) => (k === "eq" ? esc(t) : k === "del" ? `<del class="mk">${esc(t)}</del>` : `<ins class="mk">${esc(t)}</ins>`)).join("");
+  el("proof-lede", "빈 어댑터와 내 어댑터의 차이가 가장 컸던 장면이다. 빨간 줄은 작가가 지운 글자, 초록 밑줄은 작가가 넣은 글자다.");
+  el("proofs", USERS.map(u => {
+    const ex = D.examples[u];
+    return `<div style="display:grid;gap:12px;margin-bottom:22px"><h3 style="font-size:19px">${NAME[u]} · ${esc(ex.scene)}</h3><div class="proofs">
+      <div class="proof"><div class="head"><span class="label">빈 어댑터로 쓴 초고</span><span class="num note">고친 양 ${pct(ex.base.cost, 2)}</span></div><div class="text">${render(ex.base.marks)}</div></div>
+      <div class="proof"><div class="head"><span class="label">내 어댑터로 쓴 초고</span><span class="num note">고친 양 ${pct(ex.own.cost, 2)}</span></div><div class="text">${render(ex.own.marks)}</div></div>
+    </div></div>`;
+  }).join(""));
+})();
+
+el("foot", `<span>LLM 호출 ${D.cost.calls}회 · $${D.cost.usd} (sonnet, 채점만 opus)</span><span>재현: <code>PA_HOME=data/exp python3 demo/experiment.py</code> · 코드 <code>~/webgpt/projects/prose-adapter</code></span>`);
+</script>
